@@ -16,7 +16,7 @@ func Test_ExecWithOutput(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		output, _ := ExecWithOutput(test.Input)
+		output, _ := execWithOutput(test.Input)
 		assert.Equal(t, test.Want, output)
 	}
 }
