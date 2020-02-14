@@ -1,0 +1,81 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: slabinfo-exporter
+  namespace: monitoring
+  labels:
+    app: slabinfo-exporter
+spec:
+  template:
+    metadata:
+      labels:
+        app: slabinfo-exporter
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: type
+                    operator: NotIn
+                    values:
+                      - virtual-kubelet
+      tolerations:
+        - operator: Exists
+      hostNetwork: true
+      containers:
+        - image: registry.qtt6.cn/paas-dev/slabinfo:latest
+          securityContext:
+            runAsUser: 0
+            privileged: true
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
+              cpu: 20m
+              memory: 100Mi
+          imagePullPolicy: Always
+          name: slabinfo-exporter
+          volumeMounts:
+            - mountPath: /proc
+              name: proc
+      volumes:
+        - name: proc
+          hostPath:
+            path: /proc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: slabinfo-exporter
+  name: slabinfo-exporter
+  namespace: monitoring
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 9999
+  selector:
+    app: slabinfo-exporter
+  type: ClusterIP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    system-app: "true"
+  name: slabinfo-exporter
+  namespace: monitoring
+spec:
+  endpoints:
+    - path: /metrics
+      port: http
+  namespaceSelector:
+    matchNames:
+      - monitoring
+  selector:
+    matchLabels:
+      app: slabinfo-exporter
