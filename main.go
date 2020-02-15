@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -92,7 +91,7 @@ func serve(server *http.Server, port int) func() error {
 	return func() error {
 		server.Addr = fmt.Sprintf(":%d", port)
 
-		level.Info(logger).Log("msg", fmt.Sprintf("start insecure server for debug, listen on :%d", port))
+		logger.Log("msg", fmt.Sprintf("start insecure server for debug, listen on :%d", port))
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
 			return fmt.Errorf("start insecure server err: %w", err)
 		}
@@ -131,7 +130,7 @@ func startCollect(ctx context.Context) error {
 
 		select {
 		case <-ctx.Done():
-			level.Info(logger).Log("msg", "stop get slab info...")
+			logger.Log("msg", "stop get slab info...")
 			return nil
 		case <-ticker.C:
 		}
@@ -157,19 +156,19 @@ func main() {
 
 	select {
 	case <-term:
-		level.Info(logger).Log("msg", "Received SIGTERM, exiting gracefully...")
+		logger.Log("msg", "Received SIGTERM, exiting gracefully...")
 	case <-ctx.Done():
-		level.Info(logger).Log("msg", "Stop server, exiting...")
+		logger.Log("msg", "Stop server, exiting...")
 	}
 
 	cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		level.Error(logger).Log("msg", "Server shutdown error", "err", err)
+		logger.Log("msg", "Server shutdown error", "err", err)
 	}
 
 	if err := wg.Wait(); err != nil {
-		level.Error(logger).Log("msg", "Unhandled error received. Exiting...", "err", err)
+		logger.Log("msg", "Unhandled error received. Exiting...", "err", err)
 	}
 
 }
